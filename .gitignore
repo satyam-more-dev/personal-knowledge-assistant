@@ -1,0 +1,10 @@
+_pycache_/
+*.py[cod]
+backups/
+delete_backup_test/
+backup_state.json
+notes*.txt
+categorized_notes*.txt
+main_before*.py
+
+categorized_before_delete_test.txt
