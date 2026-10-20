@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10131f">
+<title>MindVault | Personal Knowledge Assistant</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0e17;color:#f4f5fb;font-family:Segoe UI,Arial,sans-serif}
+.app{display:flex;min-height:100vh}
+aside{width:230px;padding:26px 18px;background:#10131f;border-right:1px solid #252a3b;flex-shrink:0}
+.logo{font-size:24px;font-weight:800;margin-bottom:38px}.logo span{color:#a78bfa}
+.nav{display:block;padding:13px;margin:7px 0;border-radius:10px;color:#a9afc3;text-decoration:none}
+.nav.active,.nav:hover{background:#28233e;color:#c4b5fd}
+main{flex:1;min-width:0;padding:32px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(25px,4vw,34px)}.muted{color:#9ba3b9}
+.pill{color:#c4b5fd;background:#28233e;padding:9px 13px;border-radius:20px;font-size:13px}
+.hero{margin-top:28px;padding:26px;border-radius:20px;background:linear-gradient(120deg,#282044,#171c30);border:1px solid #39304f}
+.hero h2{margin:0 0 10px}.search{display:flex;gap:10px;margin-top:20px}
+input,textarea,select{width:100%;padding:13px;border-radius:10px;border:1px solid #34394d;background:#10131f;color:white;font:inherit;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#a78bfa}
+button{padding:12px 16px;border:0;border-radius:10px;background:#a78bfa;color:#171326;font-weight:700;cursor:pointer}
+.section-title{margin:28px 0 15px;font-size:20px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.card{padding:19px;border:1px solid #252a3b;border-radius:16px;background:#121622}
+.stat-number{font-size:28px;font-weight:750;margin-top:10px}
+.notes-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+textarea{min-height:110px;resize:vertical;margin:12px 0}
+.note{margin-top:12px;overflow-wrap:anywhere}.note h3{margin:8px 0}.tag{color:#c4b5fd;font-size:12px}
+.note p{white-space:pre-wrap;color:#b8bfd1}.actions{display:flex;gap:8px}
+.actions button{padding:8px 11px}.delete{background:#44232d;color:#ffb4c0}
+#message{color:#c4b5fd;min-height:20px}
+@media(max-width:760px){.app{display:block}aside{width:100%;padding:16px;border-right:0;border-bottom:1px solid #252a3b}.logo{margin:0 0 12px}.nav{display:inline-block;padding:9px;margin:2px}main{padding:21px 15px}.stats,.notes-layout{grid-template-columns:1fr}.search{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="logo">✦ Mind<span>Vault</span></div>
+  <a class="nav active" href="#home">⌂ &nbsp; Dashboard</a>
+  <a class="nav" href="#notes">▤ &nbsp; My Notes</a>
+  <a class="nav" href="#create">＋ &nbsp; Create Note</a>
+  <p class="muted" style="font-size:11px;margin:30px 12px 0">YOUR PERSONAL KNOWLEDGE SPACE</p>
+</aside>
+<main id="home">
+  <div class="top">
+    <div><p class="muted" style="margin:0 0 8px">YOUR SECOND BRAIN</p><h1>Knowledge Dashboard</h1></div>
+    <span class="pill">● Workspace ready</span>
+  </div>
+  <section class="hero">
+    <h2>Ideas deserve a home.</h2>
+    <p class="muted">Capture your thoughts, organize what you learn, and find them when you need them.</p>
+    <div class="search"><input id="search" placeholder="Search your notes..." aria-label="Search notes"><button id="searchBtn" type="button">Search</button></div>
+  </section>
+  <h2 class="section-title">Your overview</h2>
+  <div class="stats">
+    <div class="card"><span class="muted">Total notes</span><div class="stat-number" id="total">0</div></div>
+    <div class="card"><span class="muted">Categories</span><div class="stat-number" id="categories">0</div></div>
+    <div class="card"><span class="muted">Storage</span><div class="stat-number" style="font-size:22px">SQLite</div></div>
+  </div>
+  <h2 class="section-title" id="create">Create a note</h2>
+  <div class="notes-layout">
+    <section class="card">
+      <form id="noteForm">
+        <input id="title" placeholder="Note title" maxlength="120" required>
+        <select id="category" style="margin-top:12px">
+          <option>Study</option><option>Projects</option><option>Ideas</option><option>Personal</option><option>Work</option>
+        </select>
+        <textarea id="content" placeholder="Write your thoughts here..." required></textarea>
+        <button type="submit" id="saveBtn">＋ Save note</button>
+      </form>
+      <p class="muted" style="font-size:12px">Notes are saved to your local SQLite database.</p>
+      <div id="message" role="status"></div>
+    </section>
+    <section id="notes">
+      <h2 style="margin:0 0 12px;font-size:19px">Your notes</h2>
+      <div id="noteList"></div>
+    </section>
+  </div>
+</main>
+</div>
+<script>
+let notes=[];
+let editingId=null;
+const $=id=>document.getElementById(id);
+const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+async function api(url,options={}){
+  const response=await fetch(url,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'Something went wrong');
+  return data;
+}
+
+async function loadNotes(){
+  try{
+    notes=await api('/api/notes');
+    renderNotes();
+    $('message').textContent='';
+  }catch(error){
+    $('message').textContent='Could not load notes: '+error.message;
+  }
+}
+
+function renderNotes(){
+  const query=$('search').value.trim().toLowerCase();
+  const filtered=notes.filter(n=>(n.title+' '+n.content+' '+n.category).toLowerCase().includes(query));
+  $('total').textContent=notes.length;
+  $('categories').textContent=new Set(notes.map(n=>n.category)).size;
+  $('noteList').innerHTML=filtered.length?filtered.map(n=>`
+    <article class="card note">
+      <span class="tag">${escapeHTML(n.category)}</span>
+      <h3>${escapeHTML(n.title)}</h3>
+      <p>${escapeHTML(n.content)}</p>
+      <div class="actions">
+        <button type="button" onclick="editNote(${n.id})">Edit</button>
+        <button type="button" class="delete" onclick="deleteNote(${n.id})">Delete</button>
+      </div>
+    </article>`).join(''):'<div class="card muted">No notes found. Create your first note!</div>';
+}
+
+$('noteForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const payload={title:$('title').value.trim(),category:$('category').value,content:$('content').value.trim()};
+  if(!payload.title||!payload.content)return;
+  $('saveBtn').disabled=true;
+  try{
+    if(editingId!==null){
+      await api('/api/notes/'+editingId,{method:'PUT',body:JSON.stringify(payload)});
+      $('message').textContent='Note updated successfully!';
+    }else{
+      await api('/api/notes',{method:'POST',body:JSON.stringify(payload)});
+      $('message').textContent='Note saved to SQLite successfully!';
+    }
+    editingId=null;
+    $('saveBtn').textContent='＋ Save note';
+    event.target.reset();
+    await loadNotes();
+  }catch(error){
+    $('message').textContent='Save failed: '+error.message;
+  }finally{$('saveBtn').disabled=false;}
+});
+
+async function editNote(id){
+  const note=notes.find(n=>n.id===id);
+  if(!note)return;
+  editingId=id;
+  $('title').value=note.title;
+  $('category').value=note.category;
+  $('content').value=note.content;
+  $('saveBtn').textContent='Update note';
+  $('message').textContent='Editing note — save your changes when ready.';
+  $('create').scrollIntoView({behavior:'smooth'});
+}
+
+async function deleteNote(id){
+  if(!confirm('Delete this note permanently?'))return;
+  try{
+    await api('/api/notes/'+id,{method:'DELETE'});
+    if(editingId===id){editingId=null;$('noteForm').reset();$('saveBtn').textContent='＋ Save note';}
+    $('message').textContent='Note deleted.';
+    await loadNotes();
+  }catch(error){$('message').textContent='Delete failed: '+error.message;}
+}
+
+$('searchBtn').addEventListener('click',renderNotes);
+$('search').addEventListener('input',renderNotes);
+loadNotes();
+</script>
+</body>
+</html>

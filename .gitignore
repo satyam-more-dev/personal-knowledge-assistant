@@ -8,3 +8,24 @@ categorized_notes*.txt
 main_before*.py
 
 categorized_before_delete_test.txt
+# Python virtual environment
+.venv/
+venv/
+
+# Local database and SQLite files
+webapp/mindvault.db
+webapp/*.db-wal
+webapp/*.db-shm
+
+# Secrets
+.env
+.env.*
+
+# Python cache
+__pycache__/
+
+# Test file
+categorized_before_delete_test.txt
+
+# Empty temporary file
+README.md.py
