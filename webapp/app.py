@@ -18,14 +18,17 @@ from flask_login import (
 from werkzeug.security import (
     generate_password_hash, check_password_hash
 )
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-
-# Local development key. Public deployment se pehle environment variable set karna.
 app.config["SECRET_KEY"] = os.environ.get("MINDVAULT_SECRET_KEY")
 
 if not app.config["SECRET_KEY"]:
     raise RuntimeError("MINDVAULT_SECRET_KEY is missing. Check your .env file.")
+
+csrf = CSRFProtect(app)
+
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "mindvault.db"

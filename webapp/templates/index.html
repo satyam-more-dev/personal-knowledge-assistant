@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#050b20">
 <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
@@ -149,6 +150,7 @@ input:focus,textarea:focus,select:focus{border-color:#8b6bff;box-shadow:0 0 0 3p
 </div>
 
 <form action="{{ url_for('logout') }}" method="POST" class="logout-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="logout-btn">↪️ Logout</button>
 </form>
   <div class="sidebar-quote">🚀 &nbsp; “Better notes.<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bigger dreams.”</div>
@@ -200,7 +202,26 @@ let notes=[];
 let editingId=null;
 const $=id=>document.getElementById(id);
 const escapeHTML=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(url,options={}){const response=await fetch(url,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});const data=await response.json();if(!response.ok)throw new Error(data.error||'Something went wrong');return data}
+async function api(url, options = {}) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    const response = await fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+            ...(options.headers || {})
+        }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong');
+    }
+
+    return data;
+}
 function categoryClass(category){const c=String(category).toLowerCase();if(c.includes('project')||c.includes('career'))return'projects';if(c.includes('idea'))return'ideas';if(c.includes('personal'))return'personal';if(c.includes('work')||c.includes('tech'))return'work';if(c.includes('finance'))return'finance';return''}
 function dateLabel(value){if(!value)return'Today';const d=new Date(value);return Number.isNaN(d.getTime())?'Saved':d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})}
 async function loadNotes(){try{notes=await api('/api/notes');renderNotes();$('message').textContent=''}catch(error){$('message').textContent='Could not load notes: '+error.message;$('noteList').innerHTML='<div class="empty">Could not load notes. Check that the Flask server is running.</div>'}}

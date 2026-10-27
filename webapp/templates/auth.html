@@ -215,6 +215,8 @@
             <form method="POST"
                   action="{{ url_for('register' if mode == 'register' else 'login') }}">
 
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                 <label for="username">Username</label>
                 <input
                     id="username"
