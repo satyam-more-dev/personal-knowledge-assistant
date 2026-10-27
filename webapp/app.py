@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import re
 import sqlite3
 from pathlib import Path
@@ -18,10 +22,10 @@ from werkzeug.security import (
 app = Flask(__name__)
 
 # Local development key. Public deployment se pehle environment variable set karna.
-app.config["SECRET_KEY"] = os.environ.get(
-    "MINDVAULT_SECRET_KEY",
-    "local-development-key-change-before-deployment"
-)
+app.config["SECRET_KEY"] = os.environ.get("MINDVAULT_SECRET_KEY")
+
+if not app.config["SECRET_KEY"]:
+    raise RuntimeError("MINDVAULT_SECRET_KEY is missing. Check your .env file.")
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "mindvault.db"
