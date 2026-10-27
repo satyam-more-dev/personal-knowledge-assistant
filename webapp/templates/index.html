@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#050b20">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 <title>MindVault | Personal Knowledge Assistant</title>
 <style>
 :root{--bg:#03091b;--panel:#08142e;--panel2:#0b1937;--line:#1c2b50;--text:#f5f7ff;--muted:#a8b6d8;--purple:#7047ff;--purple2:#a78bfa;--cyan:#49d9ff}
@@ -57,6 +58,71 @@ input:focus,textarea:focus,select:focus{border-color:#8b6bff;box-shadow:0 0 0 3p
 @media(max-width:1250px){.content-grid{grid-template-columns:minmax(0,1fr) 290px}.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.app{grid-template-columns:1fr}aside{position:relative;height:auto;padding:14px}.brand{padding-bottom:12px}.nav-label,.profile,.sidebar-quote{display:none}.navs{display:flex;gap:4px;overflow-x:auto;padding-top:10px}.nav{white-space:nowrap;padding:10px}.content-grid{grid-template-columns:1fr}main{padding:0 16px 25px}.topbar{height:auto;min-height:70px}.right-column{display:grid;grid-template-columns:1fr 1fr;gap:14px}.side-panel{margin-bottom:0}}
 @media(max-width:560px){main{padding:0 12px 20px}.topbar{gap:8px}.top-actions{gap:6px}.top-actions .icon-btn{display:none}.top-avatar{width:34px;height:34px}.hero{padding:20px 15px}.hero-top{min-height:0;display:block}.hero h1{font-size:28px}.quote{display:none}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:12px 10px}.stat-number{font-size:20px}.notes-grid{grid-template-columns:1fr}.right-column{display:block}.side-panel{margin-bottom:14px}.form-grid{grid-template-columns:1fr}.form-grid textarea{grid-column:auto}.ai-banner{align-items:flex-start;padding:17px;flex-wrap:wrap}.coming{margin-left:0}.global-search input{font-size:12px}.brand-name{font-size:20px}}
+.logout-form {
+    padding: 0 7px 12px;
+}
+/* MindVault Mobile Polish */
+@media (max-width: 600px) {
+    .app {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    aside {
+        padding: 12px;
+    }
+
+    .navs {
+        scrollbar-width: thin;
+    }
+
+    .nav {
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    main {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .global-search {
+        min-width: 0;
+    }
+
+    .hero,
+    .card,
+    .side-panel {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .form-actions .save-btn {
+        width: 100%;
+    }
+
+    .logout-form {
+        padding-bottom: 8px;
+    }
+}
+
+.logout-btn {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #29395f;
+    border-radius: 10px;
+    background: #0a1733;
+    color: #c4b5fd;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: #241b4b;
+    border-color: #7047ff;
+}
 </style>
 </head>
 <body>
@@ -72,18 +138,30 @@ input:focus,textarea:focus,select:focus{border-color:#8b6bff;box-shadow:0 0 0 3p
     <a class="nav" href="#ai"><span class="ico">⚙</span> AI Assistant <span class="beta">Beta</span></a>
     <a class="nav" href="#settings"><span class="ico">⚙</span> Settings</a>
   </nav>
-  <div class="profile"><div class="avatar">SM</div><div><strong>Satyam More</strong><small>Student • B.Tech IT</small></div></div>
+  <div class="profile">
+    <div class="avatar">
+        {{ current_user.username[0]|upper }}
+    </div>
+    <div>
+        <strong>{{ current_user.username }}</strong>
+        <small>Personal Workspace</small>
+    </div>
+</div>
+
+<form action="{{ url_for('logout') }}" method="POST" class="logout-form">
+    <button type="submit" class="logout-btn">↪️ Logout</button>
+</form>
   <div class="sidebar-quote">🚀 &nbsp; “Better notes.<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bigger dreams.”</div>
 </aside>
 <main id="home">
   <header class="topbar">
     <div class="global-search"><span class="search-icon">⌕</span><input id="search" placeholder="Search your notes... (try natural language)" aria-label="Search notes"></div>
-    <div class="top-actions"><button class="icon-btn" type="button" aria-label="Appearance">☼</button><button class="icon-btn" type="button" aria-label="Notifications">♧</button><div class="top-avatar">SM</div></div>
+    <div class="top-actions"><button class="icon-btn" type="button" aria-label="Appearance">☼</button><button class="icon-btn" type="button" aria-label="Notifications">♧</button><div class="top-avatar">{{ current_user.username[0]|upper }}</div></div>
   </header>
   <div class="content-grid">
     <div class="main-column">
       <section class="hero">
-        <div class="hero-top"><div><p class="greeting">Good to see you,</p><h1>Satyam 👋</h1><p class="hero-copy">Your ideas, notes and knowledge — all in one place.<br>Keep building your future!</p></div><div class="quote">“Small notes today,<br>big dreams tomorrow.”<small>— MindVault</small></div></div>
+        <div class="hero-top"><div><p class="greeting">Good to see you,</p><h1>{{ username.split()[0] }} 👋</h1><p class="hero-copy">Your ideas, notes and knowledge — all in one place.<br>Keep building your future!</p></div><div class="quote">“Small notes today,<br>big dreams tomorrow.”<small>— MindVault</small></div></div>
         <div class="stats">
           <div class="stat"><div class="stat-head"><span class="stat-icon">◈</span><div class="stat-label">Total Notes</div></div><div class="stat-number" id="total">0</div><div class="stat-foot">↑ Your knowledge grows</div></div>
           <div class="stat"><div class="stat-head"><span class="stat-icon">▱</span><div class="stat-label">Categories</div></div><div class="stat-number" id="categories">0</div><div class="stat-foot">↑ Keep things organized</div></div>
@@ -146,6 +224,15 @@ $('viewAll').addEventListener('click',()=>{$('search').value='';renderNotes();$(
 $('recentView').addEventListener('click',()=>{$('search').value='';renderNotes();$('notes').scrollIntoView({behavior:'smooth'})});
 document.querySelectorAll('.nav').forEach(link=>link.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));link.classList.add('active')}));
 loadNotes();
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register(
+            "{{ url_for('static', filename='service-worker.js') }}"
+        ).catch(error => {
+            console.error("Service Worker registration failed:", error);
+        });
+    });
+}
 </script>
 </body>
 </html>

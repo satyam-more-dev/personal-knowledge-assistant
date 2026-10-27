@@ -1,0 +1,12 @@
+{
+  "name": "MindVault - Personal Knowledge Assistant",
+  "short_name": "MindVault",
+  "description": "Your personal space for notes and knowledge.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#03091b",
+  "theme_color": "#050b20",
+  "orientation": "portrait",
+  "icons": []
+}
